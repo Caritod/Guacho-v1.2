@@ -12,7 +12,7 @@ def read_header(file_in, verbose=True):
       if s == '\xff' :
         break
       if (verbose) : 
-        print s  
+        print(s)  
   f_kind = struct.unpack('s',f.read(1))[0]
   nx, ny, nz = struct.unpack('3i',f.read(12))
   if (f_kind == 'd'):
@@ -58,7 +58,7 @@ def u2prim(file_in, ublock, equation, mhd = False) :
                                           +pblock[6,::]**2
                                           +pblock[7,::]**2 )  /cv
     pblock[4,::] = pblock[4,::] * rhosc * vsc**2
-  if (mhd and equation >= 5 and equation <= 7) :
+  if ( mhd and (equation >= 5) and (equation <= 7) ) :
     Bsc = np.sqrt(4.*np.pi*rhosc*vsc**2)
     pblock[equation,::] = pblock[equation,::] * Bsc
   return pblock[equation,::]
@@ -85,9 +85,9 @@ def readbin3d_block(file_in, equation, verbose=False, mhd = False):
 '''
   Returns the 3D array for equation neq in all the domain
 '''
-def readbin3d_all(nout,neq,path='',base='points',verbose=False):
+def readbin3d_all(nout,neq,path='',base='points',verbose=False, mhd=False):
   
-  print 'Retrieving 3D map for eqn',neq
+  print ('Retrieving 3D map for eqn',neq)
   file_in = path+base+str(0).zfill(3)+'.'+str(nout).zfill(3)+'.bin'
   head_info = read_header(file_in,verbose=False)
   f                   = head_info[0]
@@ -98,7 +98,7 @@ def readbin3d_all(nout,neq,path='',base='points',verbose=False):
     for jp in range(mpi_y) :
       for kp in range(mpi_z) :
         file_in = path+base+str(proc).zfill(3)+'.'+str(nout).zfill(3)+'.bin'
-        print file_in
+        print("%s\r" % file_in)
         head_info = read_header(file_in,verbose=False)
         f                   = head_info[0]
         nx, ny, nz          = head_info[2]
@@ -108,6 +108,7 @@ def readbin3d_all(nout,neq,path='',base='points',verbose=False):
           map3d=np.zeros(shape=(nx*mpi_x,ny*mpi_y,nz*mpi_z))
         proc = proc+1
         map3d[x0:x0+nx,y0:y0+ny,z0:z0+nz] = readbin3d_block(file_in, neq, verbose=verbose, mhd= mhd)
+  print("\n")
   return map3d.T
 
 '''
@@ -149,6 +150,18 @@ def get_extent(nout,path='',base='points',verbose=False):
   return ( x_extent, y_extent, z_extent)
 
 '''
+  Returns the deltas of the computational box
+'''
+def get_deltas(nout,path='',base='points',verbose=False):
+  
+  file_in = path+base+str(0).zfill(3)+'.'+str(nout).zfill(3)+'.bin'
+  head_info = read_header(file_in,verbose=False)
+  f                   = head_info[0]
+  dx, dy, dz          = head_info[3]
+  f.close()
+  return ( dx, dy, dz)
+
+'''
   Returns the box size
 '''
 def get_boxsize(nout,path='',base='points',verbose=False):
@@ -156,7 +169,8 @@ def get_boxsize(nout,path='',base='points',verbose=False):
   file_in = path+base+str(0).zfill(3)+'.'+str(nout).zfill(3)+'.bin'
   head_info = read_header(file_in,verbose=False)
   nx, ny, nz          = head_info[2]
-  return (nx, ny, nz)
+  mpi_x, mpi_y, mpi_z = head_info[5]
+  return (nx*mpi_x, ny*mpi_y, nz*mpi_z)
 
 '''
   Returns the basic scalings
@@ -174,7 +188,7 @@ def get_scalings(nout,path='',base='points',verbose=False):
  Returns a 2D cut perpenticular to the x, y or z axes (cut ==1, 2, 3, respectively)
  pos denotes the position of the cut in cells, neq the equation to be retrieved
 '''
-def get_2d_cut(cut,pos,nout,neq,path='',base='points',verbose=False):
+def get_2d_cut(cut,pos,nout,neq,path='',base='points',verbose=False,mhd=False):
 
   file_in = path+base+str(0).zfill(3)+'.'+str(nout).zfill(3)+'.bin'
   head_info = read_header(file_in,verbose=False)
@@ -188,13 +202,13 @@ def get_2d_cut(cut,pos,nout,neq,path='',base='points',verbose=False):
   nztot = nz * mpi_z
   if cut == 1 :
       map2d=np.zeros(shape=(nytot,nztot))
-      print 'YZ cut, equation: ', neq
+      print('YZ cut, equation: ', neq)
   elif cut == 2 :
       map2d=np.zeros(shape=(nxtot,nztot))
-      print 'XZ cut, equation: ', neq
+      print('XZ cut, equation: ', neq)
   elif cut == 3 : 
       map2d=np.zeros(shape=(nxtot,nytot))
-      print 'XY cut, equation: ', neq
+      print('XY cut, equation: ', neq)
   proc=0
   for ip in range(mpi_x) :
     for jp in range(mpi_y) :
@@ -203,7 +217,7 @@ def get_2d_cut(cut,pos,nout,neq,path='',base='points',verbose=False):
         if cut == 1 :
           if ( (pos >= ip*nx) and (pos <= (ip+1)*nx-1)) :
             file_in = path+base+str(proc).zfill(3)+'.'+str(nout).zfill(3)+'.bin'
-            print file_in
+            print(file_in)
             head_info = read_header(file_in,verbose=False)
             f                   = head_info[0]
             nx, ny, nz          = head_info[2]
@@ -216,7 +230,7 @@ def get_2d_cut(cut,pos,nout,neq,path='',base='points',verbose=False):
         elif cut == 2:
           if ( (pos >= jp*ny) and (pos <= (jp+1)*ny-1)) :
             file_in = path+base+str(proc).zfill(3)+'.'+str(nout).zfill(3)+'.bin'
-            print file_in
+            print(file_in)
             head_info = read_header(file_in,verbose=False)
             f                   = head_info[0]
             nx, ny, nz          = head_info[2]
@@ -229,7 +243,7 @@ def get_2d_cut(cut,pos,nout,neq,path='',base='points',verbose=False):
         elif cut == 3:
           if ( (pos >= kp*nz) and (pos <= (kp+1)*nz-1)) :
             file_in = path+base+str(proc).zfill(3)+'.'+str(nout).zfill(3)+'.bin'
-            print file_in
+            print(file_in)
             head_info = read_header(file_in,verbose=False)
             f                   = head_info[0]
             nx, ny, nz          = head_info[2]

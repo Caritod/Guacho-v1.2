@@ -2,9 +2,9 @@
 !> @file hll.f90
 !> @brief HLL approximate Riemann solver module
 !> @author Alejandro Esquivel
-!> @date 2/Nov/2014
+!> @date 4/May/2016
 
-! Copyright (c) 2014 A. Esquivel, M. Schneiter, C. Villareal D'Angelo
+! Copyright (c) 2016 Guacho Co-Op
 !
 ! This file is part of Guacho-3D.
 !
@@ -29,9 +29,9 @@
 
 module hll
 
-#ifdef HLL
-
 contains
+
+!=======================================================================
 
 !> @brief Solves the Riemann problem at the interface PL,PR
 !! using the HLL solver
@@ -76,6 +76,7 @@ subroutine prim2fhll(priml,primr,ff)
     call prim2u(primr,uR)
 
     ff(:)=(sr*fL(:)-sl*fR(:)+sl*sr*(uR(:)-uL(:)))/(sr-sl)
+
     return
 
     end subroutine prim2fhll
@@ -113,6 +114,7 @@ subroutine hllfluxes(choice)
 
               call prim2fhll(priml,primr,ff)
               f(:,i,j,k)=ff(:)
+
               !------- y direction -------------------------------------
               priml(:)=primit(:,i ,j  ,k )
               primr(:)=primit(:,i, j+1,k )
@@ -122,6 +124,7 @@ subroutine hllfluxes(choice)
               call prim2fhll(priml,primr,ff)
               call swapy(ff,neq)
               g(:,i,j,k)=ff(:)
+
               !------- z direction -------------------------------------
               priml(:)=primit(:,i ,j ,k  )
               primr(:)=primit(:,i, j, k+1)
@@ -189,8 +192,6 @@ subroutine hllfluxes(choice)
   end select
 
 end subroutine hllfluxes
-
-#endif
 
 end module hll
 

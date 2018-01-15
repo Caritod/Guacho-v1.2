@@ -1,10 +1,10 @@
 !=======================================================================
 !> @file hlle.f90
 !> @brief HLLE approximate Riemann solver module
-!> @author C. Villarreal  D'Angelo, A. Esquivel, M. Schneiter
-!> @date 2/Nov/2014
+!> @author C. Villarreal D'Angelo, A. Esquivel, M. Schneiter
+!> @date 4/May/2016
 
-! Copyright (c) 2014 A. Esquivel, M. Schneiter, C. Villareal D'Angelo
+! Copyright (c) 2016 Guacho Co-Op
 !
 ! This file is part of Guacho-3D.
 !
@@ -29,7 +29,7 @@
 
 module hlle
 
-#ifdef HLLE
+#ifdef BFIELD
 
 contains
 
@@ -78,6 +78,8 @@ subroutine prim2fhlle(priml,primr,ff)
 
   ff(:)=(sr*fL(:)-sl*fR(:)+sl*sr*(uR(:)-uL(:)))/(sr-sl)
 
+  return
+
   end subroutine prim2fhlle
 
 !=======================================================================
@@ -118,11 +120,11 @@ subroutine hllEfluxes(choice)
               !------- y direction -------------------------------------
               priml(:)=primit(:,i ,j  ,k )
               primr(:)=primit(:,i, j+1,k )
-              call swapy(priml,neq)          !swaps primL for L state
-              call swapy(primr,neq)          !swaps primR for R state 
+              call swapy(priml,neq)
+              call swapy(primr,neq)
  
-              call prim2fhlle(priml,primr,ff)  !gets fluxes (swapped)
-              call swapy(ff,neq)             !swaps back the fluxes
+              call prim2fhlle(priml,primr,ff)
+              call swapy(ff,neq)
               g(:,i,j,k)=ff(:)
 
               !------- z direction -------------------------------------
